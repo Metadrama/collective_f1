@@ -1,0 +1,129 @@
+ % UniKL Thesis style, prepared by Dr. Mohammad Nauman (nauman@csrdu.org) and Dr. Sohail (sohail@unikl.edu.my), modified by Dr Norhaidah for FYP Bachelor of Software Engineering.
+
+\documentclass{class/uniklthesis}%
+%\usepackage{multibib}
+\usepackage{longtable}
+\usepackage[charter]{mathdesign}
+\usepackage[protrusion=on]{microtype}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{cite}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{floatrow}
+\floatsetup[table]{capposition=top}
+\usepackage[charter]{mathdesign}
+\usepackage{underscore}
+%\usepackage{subfig}
+\usepackage{float}
+\usepackage{accents}
+\usepackage{xcolor,colortbl}
+\definecolor{Gray}{gray}{0.85}
+\usepackage{rotating}
+\usepackage{setspace}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{natbib} % Uncomment for APA style referencing
+\usepackage{placeins} 
+\usepackage{multirow}
+\usepackage{cleveref}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{tabulary}
+\usepackage{mwe}
+\usepackage{subcaption}
+\usepackage{lmodern}
+%\usepackage{caption}
+\usepackage{gensymb}
+\usepackage{capt-of}
+\usepackage[flushleft]{threeparttable}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{mathtools}
+\usepackage{lipsum}
+\usepackage{subcaption}
+\usepackage{mathptmx}
+\usepackage{t1enc}
+\usepackage{anyfontsize}
+%\usepackage[table,xcdraw]{xcolor}
+
+\renewcommand{\arraystretch}{1.2}
+
+
+% xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+\input{files/displayPrefs}
+% xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+%\makeindex     				
+\begin{document}
+	
+%	\expandafter\show\the\font % Commented out debugging command
+	
+%	\stop
+	
+	
+\romanNumbering 
+\pagestyle{empty}
+
+%%% ------------------------------------------------
+%\makeTitlePage					% the title page
+%\makeUniKLApprovalSheet
+%\makeCopyrightsPage
+%\makeAcknowledgementsPage 
+%%% ------------------------------------------------
+
+%%% ------------------------------------------------
+\makeTOC					% table of contents
+%\makeLOT					% list of tables
+%\makeLOF 					% list of figures
+%%% ----------------------------------------------- 
+
+\input{files/glossary}			% the glossary 
+\input{files/Abstract}
+\doublespacing  
+\newpage
+
+%%
+%% ---------------------------------------------------------------------
+\arabicNumbering				% change page numbering to Arabic
+%%% ---------------------------------------------------------------------
+
+
+%%% CHAPTERS START FROM HERE 
+
+%%% ---------------------------------------------------------------------
+
+\pagestyle{unikl}
+\include{files/chIntroduction}
+%\include{files/chLiteratureReview}
+%\include{files/chMethodology}
+%\include{files/chProtoDevelop}
+%\include{files/chTesting}
+%\include{files/chConclusions}
+
+% You can add a new chapter by copying the above command and changing its name to the new chapter name. This command will include a new chapter file in your thesis. After this, create a new Tex file with the same name you have given above and save this file in the "files" folder of your thesis directory. %
+	
+	
+% -----------------------------------------------------------------------
+
+\addcontentsline{toc}{chapter}{\bibname}
+%\bibliographystyle{IEEEtran}
+\bibliographystyle{apalike}
+
+%One bibliography
+\bibliography{bib/thesis}
+
+\appendix
+\numberwithin{figure}{chapter} 
+
+% ---------------------------------------------------------------------
+% annexures 
+\makeappendixseperator
+\singlespacing
+\input{files/annexureA}
+\input{files/annexureB}
+
+\end{document} 
+
+ 

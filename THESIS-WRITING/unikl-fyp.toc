@@ -1,0 +1,10 @@
+\contentsline {chapter}{List of Abbreviations}{ii}{chapter*.2}%
+\contentsline {chapter}{Abstract (English)}{iii}{chapter*.2}%
+\contentsline {chapter}{Abstrak(Bahasa Malaysia)}{iv}{chapter*.2}%
+\contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Introduction}{1}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Project Background}{1}{section.1.2}%
+\contentsline {chapter}{References}{2}{section.1.2}%
+\contentsline {chapter}{\numberline {A}Gantt Chart}{4}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Construction of Variables}{4}{section.A.1}%
+\contentsline {chapter}{\numberline {B}Questionnaire Sample}{5}{appendix.B}%

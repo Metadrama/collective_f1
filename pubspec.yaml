@@ -1,0 +1,73 @@
+name: collective
+description: "Collective — A journaling app focused on simplicity and speed, built with Flutter."
+publish_to: 'none' # Prevents accidental publishing to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI & Design
+  cupertino_icons: ^1.0.8
+  flutter_svg: ^2.0.10+1
+  shimmer: ^2.0.0
+  flutter_sticky_header: ^0.8.0
+
+  # Date & Time
+  intl: ^0.20.2
+  table_calendar: ^3.2.0
+
+  # Firebase Core Services
+  firebase_core: ^3.13.0
+  firebase_auth: ^5.5.3
+  cloud_firestore: ^5.6.7
+  firebase_storage: ^12.1.1
+  firebase_app_check: ^0.3.0+1
+
+  # Auth & Social Login
+  google_sign_in: ^6.3.0
+  # twitter_login: ^4.4.1 # Overridden below with local plugin  # Local Storage & Data
+  shared_preferences: ^2.5.3
+  sembast: ^3.6.0+1
+  path_provider: ^2.0.0
+  path: ^1.8.3
+    # Media
+  image_picker: ^1.1.2
+  cached_network_image: ^3.4.1
+  camera: ^0.11.1
+  ffmpeg_kit_flutter_new: ^4.0.0
+  easy_image_viewer: ^1.5.1
+  # Utilities
+  connectivity_plus: ^5.0.2
+  fuzzy: ^0.5.1
+  http: ^1.2.0
+  flutter_markdown: ^0.7.7+1
+  twitter_login: ^4.4.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/logo/
+
+  fonts:
+    - family: IBM Plex Sans
+      fonts:
+        - asset: assets/fonts/IBMPlexSans-VariableFont_wdth,wght.ttf
+    - family: BreeSerif
+      fonts:
+        - asset: assets/fonts/BreeSerif-Regular.ttf
+
+# Use local override to patch the twitter_login plugin with required namespace
+dependency_overrides:
+  twitter_login:
+    path: local_plugins/twitter_login
