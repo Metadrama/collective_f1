@@ -1,0 +1,40 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Match files in user_images/{userId}/...
+    // Only allow authenticated users to access their own files
+    match /user_images/{userId}/{allPaths=**} {
+      // Allow read if user is authenticated and accessing their own folder
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow write if:
+      // 1. User is authenticated
+      // 2. User is accessing their own folder
+      // 3. File size is less than 10MB
+      allow write: if request.auth != null 
+                   && request.auth.uid == userId
+                   && request.resource.size < 10 * 1024 * 1024;
+    }
+    
+    // Match GIF files in user_gifs/{userId}/...
+    // Same rules as images
+    match /user_gifs/{userId}/{allPaths=**} {
+      // Allow read if user is authenticated and accessing their own folder
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow write if:
+      // 1. User is authenticated
+      // 2. User is accessing their own folder
+      // 3. File size is less than 15MB (GIFs can be larger)
+      allow write: if request.auth != null 
+                   && request.auth.uid == userId
+                   && request.resource.size < 15 * 1024 * 1024;
+    }
+    
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

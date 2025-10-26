@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 
 import 'firebase_options.dart';
 import 'screens/journal_screen.dart';
@@ -12,6 +13,14 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  // Initialize Firebase App Check
+  await FirebaseAppCheck.instance.activate(
+    // Use debug provider for development
+    androidProvider: AndroidProvider.debug,
+    // For production, use: AndroidProvider.playIntegrity,
+  );
+  
   runApp(const JournalApp());
 }
 
