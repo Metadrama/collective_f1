@@ -3,12 +3,14 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/entry.dart';
 import '../services/api_key_service.dart';
+import '../services/vision_service.dart';
 
 /// Service for interacting with DeepSeek API to generate intelligent insights
 /// about journal entries
 class DeepseekService {
   final String _apiKey;
   final String _baseUrl = 'https://api.deepseek.com/v1';
+  final VisionService _vision = VisionService();
 
   /// Create a new DeepseekService instance
   DeepseekService() : _apiKey = ApiKeyService.getDeepseekApiKey();
@@ -162,6 +164,7 @@ class DeepseekService {
   /// Generate a brief insight for the main entry and its related entries (concise prompt)
   Future<String> generateBriefInsight(Entry mainEntry, List<Entry> relatedEntries) async {
     try {
+      final userPrompt = await _formatMainAndRelatedForInsightWithMedia(mainEntry, relatedEntries);
       final response = await http.post(
         Uri.parse('$_baseUrl/chat/completions'),
         headers: {
@@ -177,7 +180,7 @@ class DeepseekService {
             },
             {
               'role': 'user',
-              'content': _formatMainAndRelatedForInsight(mainEntry, relatedEntries)
+              'content': userPrompt
             }
           ],
           'max_tokens': 180,
@@ -208,6 +211,8 @@ class DeepseekService {
       'Authorization': 'Bearer $_apiKey',
       'Content-Type': 'application/json',
     });
+    // Build prompt including media descriptions before starting stream
+    final userPrompt = await _formatMainAndRelatedForInsightWithMedia(mainEntry, relatedEntries);
     request.body = jsonEncode({
       'model': 'deepseek-chat',
       'stream': true,
@@ -218,7 +223,7 @@ class DeepseekService {
         },
         {
           'role': 'user',
-          'content': _formatMainAndRelatedForInsight(mainEntry, relatedEntries)
+          'content': userPrompt
         }
       ],
       'max_tokens': 180,
@@ -397,14 +402,27 @@ class DeepseekService {
     return buffer.toString();
   }
 
-  /// Helper: format for brief insight
-  String _formatMainAndRelatedForInsight(Entry main, List<Entry> related) {
+  // (Removed legacy helper: replaced by async variant with media support)
+
+  /// Async helper: include media descriptions when available via Vision API
+  Future<String> _formatMainAndRelatedForInsightWithMedia(Entry main, List<Entry> related) async {
     final buffer = StringBuffer();
     buffer.writeln('Main Entry:');
+    if (main.mood != null && main.mood!.isNotEmpty) buffer.writeln('Mood: \\${main.mood}');
+    if (main.tags.isNotEmpty) buffer.writeln('Tags: \\${main.tags.join(', ')}');
+    final mainMedia = await _vision.describeEntryMedia(main);
+    if (mainMedia != null && mainMedia.isNotEmpty) buffer.writeln('Media: ' + mainMedia);
     buffer.writeln(main.text);
     buffer.writeln('---');
     buffer.writeln('Related Entries:');
-    for (final e in related) {
+    // Fetch media descriptions for related entries in parallel (best-effort)
+    final mediaDescs = await Future.wait(related.map((e) => _vision.describeEntryMedia(e)));
+    for (var i = 0; i < related.length; i++) {
+      final e = related[i];
+      if (e.mood != null && e.mood!.isNotEmpty) buffer.writeln('Mood: \\${e.mood}');
+      if (e.tags.isNotEmpty) buffer.writeln('Tags: \\${e.tags.join(', ')}');
+      final desc = mediaDescs[i];
+      if (desc != null && desc.isNotEmpty) buffer.writeln('Media: ' + desc);
       buffer.writeln(e.text);
       buffer.writeln('---');
     }
