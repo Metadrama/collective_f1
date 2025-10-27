@@ -2,6 +2,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import '../screens/settings_screen.dart';
+import '../services/preferences_service.dart';
 import 'package:collective/widgets/calendar_modal.dart';
 import 'favorites_screen.dart';
 import 'entry_insight_screen.dart';
@@ -33,6 +36,11 @@ class _JournalScreenState extends State<JournalScreen>
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
   bool _isSearching = false;
+  bool _prefSwipeDeleteEnabled = true;
+  bool _prefSwipeFavoriteEnabled = true;
+  bool _prefDeleteConfirmEnabled = true;
+  bool _prefCloseOnScroll = true;
+  String _prefMotion = 'scroll';
 
   @override
   void initState() {
@@ -47,11 +55,28 @@ class _JournalScreenState extends State<JournalScreen>
       scrollController: scrollController,
     );
     jc.loadEntriesFromFirestore();
+    _loadSwipePrefs();
     _searchController.addListener(() {
       // Listener to update UI when search text changes
       if (mounted) {
         setState(() {});
       }
+    });
+  }
+
+  Future<void> _loadSwipePrefs() async {
+    final d = await PreferencesService.isSwipeDeleteEnabled();
+    final f = await PreferencesService.isSwipeFavoriteEnabled();
+    final c = await PreferencesService.isDeleteConfirmationEnabled();
+    final cos = await PreferencesService.isCloseOnScrollEnabled();
+    final m = await PreferencesService.getSlidableMotion();
+    if (!mounted) return;
+    setState(() {
+      _prefSwipeDeleteEnabled = d;
+      _prefSwipeFavoriteEnabled = f;
+      _prefDeleteConfirmEnabled = c;
+      _prefCloseOnScroll = cos;
+      _prefMotion = m;
     });
   }
 
@@ -138,6 +163,15 @@ class _JournalScreenState extends State<JournalScreen>
                           ),
                         );
                       },
+                      onOpenSettings: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SettingsScreen(),
+                          ),
+                        );
+                        _loadSwipePrefs();
+                      },
                     ),
           ),
           Expanded(
@@ -147,7 +181,8 @@ class _JournalScreenState extends State<JournalScreen>
                   duration: const Duration(milliseconds: 300),
                   switchInCurve: Curves.easeOutCubic,
                   switchOutCurve: Curves.easeInCubic,
-                  child: CustomScrollView(
+                  child: SlidableAutoCloseBehavior(
+                    child: CustomScrollView(
                     key: ValueKey('${jc.isLoading}_${jc.entries.length}_${grouped.length}'),
                     controller: scrollController,
                     slivers:
@@ -213,6 +248,7 @@ class _JournalScreenState extends State<JournalScreen>
                                 sliver: SliverList(
                                   delegate: SliverChildBuilderDelegate(
                                     (context, index) {
+                                      final entry = entryGroup.value[index];
                                       return TweenAnimationBuilder<double>(
                                         duration: const Duration(milliseconds: 300),
                                         tween: Tween(begin: 0.0, end: 1.0),
@@ -226,65 +262,123 @@ class _JournalScreenState extends State<JournalScreen>
                                             ),
                                           );
                                         },
-                                        child: JournalEntryWidget(
-                                          key: ValueKey(entryGroup.value[index].localId ?? entryGroup.value[index].firestoreId),
-                                          entry: entryGroup.value[index],
-                                          onToggleFavorite: jc.toggleFavorite,
-                                          isSelectionMode: () => jc.isSelectionMode,
-                                          onToggleSelection: () {
-                                            setState(() => jc.toggleEntrySelection(entryGroup.value[index]));
-                                          },
-                                          searchTerm: _searchController.text,
-                                          onInsight: () async {
-                                            final entry = entryGroup.value[index];
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => EntryInsightScreen(
-                                                  entry: entry,
-                                                  journalController: jc,
+                                        child: Slidable(
+                                          key: ValueKey(entry.localId ?? entry.firestoreId),
+                                          enabled: !jc.isSelectionMode,
+                                          closeOnScroll: _prefCloseOnScroll,
+                                          startActionPane: _prefSwipeFavoriteEnabled
+                                              ? ActionPane(
+                                                  motion: _prefMotion == 'scroll' ? const ScrollMotion() : const StretchMotion(),
+                                                  extentRatio: 0.24,
+                                                  children: [
+                                                    SlidableAction(
+                                                      onPressed: (slidableContext) async {
+                                                        await jc.toggleFavorite(entry);
+                                                        Slidable.of(slidableContext)?.close();
+                                                        final snack = SnackBar(
+                                                          content: Text(entry.isFavorite ? 'Added to favorites' : 'Removed from favorites'),
+                                                          duration: const Duration(seconds: 2),
+                                                        );
+                                                        ScaffoldMessenger.of(context).showSnackBar(snack);
+                                                      },
+                                                      backgroundColor: Colors.amber[700] ?? Colors.amber,
+                                                      foregroundColor: Colors.white,
+                                                      icon: Icons.bookmark,
+                                                      label: 'Favorite',
+                                                    ),
+                                                  ],
+                                                )
+                                              : null,
+                                          endActionPane: _prefSwipeDeleteEnabled
+                                              ? ActionPane(
+                                                  motion: _prefMotion == 'scroll' ? const ScrollMotion() : const StretchMotion(),
+                                                  extentRatio: 0.24,
+                                                  children: [
+                                                    SlidableAction(
+                                                      onPressed: (slidableContext) async {
+                                                        bool proceed = true;
+                                                        if (_prefDeleteConfirmEnabled) {
+                                                          final confirm = await CustomDeleteDialog.show(
+                                                            context,
+                                                            title: 'Delete Entry',
+                                                            message: 'Are you sure you want to delete this entry? This action cannot be undone.',
+                                                          );
+                                                          proceed = confirm == true;
+                                                        }
+                                                        if (proceed) {
+                                                          setState(() {
+                                                            jc.selectedEntries.clear();
+                                                            jc.selectedEntries.add(entry);
+                                                          });
+                                                          await jc.deleteSelectedEntries();
+                                                        } else {
+                                                          Slidable.of(slidableContext)?.close();
+                                                        }
+                                                      },
+                                                      backgroundColor: Colors.red,
+                                                      foregroundColor: Colors.white,
+                                                      icon: Icons.delete,
+                                                      label: 'Delete',
+                                                    ),
+                                                  ],
+                                                )
+                                              : null,
+                                          child: JournalEntryWidget(
+                                            key: ValueKey(entry.localId ?? entry.firestoreId),
+                                            entry: entry,
+                                            onToggleFavorite: jc.toggleFavorite,
+                                            isSelectionMode: () => jc.isSelectionMode,
+                                            onToggleSelection: () {
+                                              setState(() => jc.toggleEntrySelection(entry));
+                                            },
+                                            searchTerm: _searchController.text,
+                                            onInsight: () async {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => EntryInsightScreen(
+                                                    entry: entry,
+                                                    journalController: jc,
+                                                  ),
                                                 ),
-                                              ),
-                                            );
-                                          },
-                                          onEdit: () async {
-                                            final entry = entryGroup.value[index];
-                                            final result = await Navigator.push<bool>(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => EditEntryScreen(
-                                                  entry: entry,
-                                                  journalController: jc,
+                                              );
+                                            },
+                                            onEdit: () async {
+                                              final result = await Navigator.push<bool>(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => EditEntryScreen(
+                                                    entry: entry,
+                                                    journalController: jc,
+                                                  ),
                                                 ),
-                                              ),
-                                            );
-                                            
-                                            // If changes were saved, refresh the entries
-                                            if (result == true) {
-                                              setState(() {
-                                                // The controller will automatically update the UI
-                                                // through its reactive streams
-                                              });
-                                            }
-                                          },
-                                          onDelete: () async {
-                                            final entry = entryGroup.value[index];
-                                            final confirm = await CustomDeleteDialog.show(
-                                              context,
-                                              title: 'Delete Entry',
-                                              message: 'Are you sure you want to delete this entry? This action cannot be undone.',
-                                            );
-                                            if (confirm == true) {
-                                              setState(() {
-                                                jc.selectedEntries.clear();
-                                                jc.selectedEntries.add(entry);
-                                              });
-                                              await jc.deleteSelectedEntries();
-                                            }
-                                          },
-                                          onLongPress: () {
-                                            setState(() => jc.toggleEntrySelection(entryGroup.value[index]));
-                                          },
+                                              );
+                                              if (result == true) {
+                                                setState(() {});
+                                              }
+                                            },
+                                            onDelete: () async {
+                                              bool proceed = true;
+                                              if (_prefDeleteConfirmEnabled) {
+                                                final confirm = await CustomDeleteDialog.show(
+                                                  context,
+                                                  title: 'Delete Entry',
+                                                  message: 'Are you sure you want to delete this entry? This action cannot be undone.',
+                                                );
+                                                proceed = confirm == true;
+                                              }
+                                              if (proceed) {
+                                                setState(() {
+                                                  jc.selectedEntries.clear();
+                                                  jc.selectedEntries.add(entry);
+                                                });
+                                                await jc.deleteSelectedEntries();
+                                              }
+                                            },
+                                            onLongPress: () {
+                                              setState(() => jc.toggleEntrySelection(entry));
+                                            },
+                                          ),
                                         ),
                                       );
                                     },
@@ -293,6 +387,7 @@ class _JournalScreenState extends State<JournalScreen>
                                 ),
                               );
                             }).toList(),
+                    ),
                   ),
                 ),
                 //EdgeFade(top: false, background: background),

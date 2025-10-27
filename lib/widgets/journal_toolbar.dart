@@ -11,6 +11,7 @@ class JournalToolbar extends StatelessWidget {
   final VoidCallback onToggleSearch;  final VoidCallback onToggleFavorites;
   final VoidCallback onOpenDatePicker;
   final VoidCallback onOpenAnalytics;
+  final VoidCallback onOpenSettings;
   final TextEditingController searchController;
   final FocusNode searchFocusNode;
   final ValueChanged<String> onSearchChanged;
@@ -21,6 +22,7 @@ class JournalToolbar extends StatelessWidget {
     required this.onToggleFavorites,
     required this.onOpenDatePicker,
     required this.onOpenAnalytics,
+    required this.onOpenSettings,
     required this.searchController,
     required this.searchFocusNode,
     required this.onSearchChanged,
@@ -246,6 +248,16 @@ class JournalToolbar extends StatelessWidget {
                       ),
                     ),
                     const PopupMenuItem(
+                      value: 'preferences',
+                      child: Row(
+                        children: [
+                          Icon(Icons.settings, size: 20),
+                          SizedBox(width: 12),
+                          Text('Preferences'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
                       value: 'logout',
                       child: Row(
                         children: [
@@ -262,6 +274,9 @@ class JournalToolbar extends StatelessWidget {
                         break;
                       case 'favorites':
                         onToggleFavorites();
+                        break;
+                      case 'preferences':
+                        onOpenSettings();
                         break;
                       case 'logout':
                         await authManager.signOut();
