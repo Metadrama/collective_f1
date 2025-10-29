@@ -634,6 +634,101 @@ class JournalController {
     _updateSyncStatus();
   }
 
+  // Immediately remove a single entry from the UI and persist deletion in background.
+  void removeEntryImmediate(Entry entry) {
+    final String? localId = entry.localId;
+    try {
+      entry.dispose();
+    } catch (_) {}
+
+    selectedEntries.remove(entry);
+    entries.removeWhere((e) => e == entry || (localId != null && e.localId == localId));
+    onUpdate();
+
+    // Persist deletion asynchronously without blocking the frame
+    Future(() async {
+      try {
+        if (_db != null && _store != null && localId != null) {
+          await _store!.record(localId).delete(_db!);
+        }
+      } catch (_) {}
+
+      // Firestore and Storage cleanup (best-effort)
+      try {
+        if (entry.firestoreId != null) {
+          await FirebaseFirestore.instance
+              .collection(FirestorePaths.userEntriesPath())
+              .doc(entry.firestoreId)
+              .delete()
+              .catchError((_) {});
+        }
+      } catch (_) {}
+
+      try {
+        if (entry.imageUrl != null && entry.imageUrl!.isNotEmpty) {
+          await FirebaseStorage.instance.refFromURL(entry.imageUrl!).delete().catchError((_) {});
+        }
+      } catch (_) {}
+
+      _updateSyncStatus();
+      onUpdate();
+    });
+  }
+
+  // Remove only from in-memory lists (visual removal), without disposing or persisting.
+  // Returns the index at which the entry was removed, or -1 if not present.
+  int removeEntryVisualOnly(Entry entry) {
+    final index = entries.indexOf(entry);
+    if (index != -1) {
+      selectedEntries.remove(entry);
+      entries.removeAt(index);
+      onUpdate();
+    }
+    return index;
+  }
+
+  // Reinsert an entry into the list at the given index.
+  void insertEntryAt(Entry entry, int index) {
+    if (index < 0 || index > entries.length) {
+      entries.add(entry);
+    } else {
+      entries.insert(index, entry);
+    }
+    onUpdate();
+  }
+
+  // Persist deletion for a given entry (db, firestore, storage) and dispose controller.
+  Future<void> persistDeleteEntry(Entry entry) async {
+    try {
+      if (_db != null && _store != null && entry.localId != null) {
+        await _store!.record(entry.localId!).delete(_db!);
+      }
+    } catch (_) {}
+
+    try {
+      if (entry.firestoreId != null) {
+        await FirebaseFirestore.instance
+            .collection(FirestorePaths.userEntriesPath())
+            .doc(entry.firestoreId)
+            .delete()
+            .catchError((_) {});
+      }
+    } catch (_) {}
+
+    try {
+      if (entry.imageUrl != null && entry.imageUrl!.isNotEmpty) {
+        await FirebaseStorage.instance.refFromURL(entry.imageUrl!).delete().catchError((_) {});
+      }
+    } catch (_) {}
+
+    try {
+      entry.dispose();
+    } catch (_) {}
+
+    _updateSyncStatus();
+    onUpdate();
+  }
+
   void dispose() {
     controller.dispose();
     focusNode.dispose();

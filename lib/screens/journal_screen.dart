@@ -21,6 +21,7 @@ import '../widgets/journal_toolbar.dart';
 import '../widgets/journal_selection_toolbar.dart';
 import '../controller/journal_controller.dart';
 import '../utils/system_ui_helper.dart';
+import '../widgets/slidable_open_trigger.dart';
 
 class JournalScreen extends StatefulWidget {
   const JournalScreen({super.key});
@@ -108,6 +109,8 @@ class _JournalScreenState extends State<JournalScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Keep a stable reference to the screen context for navigation/dialogs
+    final rootContext = context;
     updateSystemUiOverlay(context);
     final background = Theme.of(context).scaffoldBackgroundColor;
     // Use filteredEntries for display
@@ -263,54 +266,27 @@ class _JournalScreenState extends State<JournalScreen>
                                           );
                                         },
                                         child: Slidable(
+                                          groupTag: 'journal_entries',
                                           key: ValueKey(entry.localId ?? entry.firestoreId),
                                           enabled: !jc.isSelectionMode,
                                           closeOnScroll: _prefCloseOnScroll,
-                                          startActionPane: _prefSwipeFavoriteEnabled
+                                          // Swipe left (start) to Delete (with confirmation)
+                                          startActionPane: _prefSwipeDeleteEnabled
                                               ? ActionPane(
                                                   motion: _prefMotion == 'scroll' ? const ScrollMotion() : const StretchMotion(),
                                                   extentRatio: 0.24,
                                                   children: [
                                                     SlidableAction(
                                                       onPressed: (slidableContext) async {
-                                                        await jc.toggleFavorite(entry);
-                                                        Slidable.of(slidableContext)?.close();
-                                                        final snack = SnackBar(
-                                                          content: Text(entry.isFavorite ? 'Added to favorites' : 'Removed from favorites'),
-                                                          duration: const Duration(seconds: 2),
-                                                        );
-                                                        ScaffoldMessenger.of(context).showSnackBar(snack);
-                                                      },
-                                                      backgroundColor: Colors.amber[700] ?? Colors.amber,
-                                                      foregroundColor: Colors.white,
-                                                      icon: Icons.bookmark,
-                                                      label: 'Favorite',
-                                                    ),
-                                                  ],
-                                                )
-                                              : null,
-                                          endActionPane: _prefSwipeDeleteEnabled
-                                              ? ActionPane(
-                                                  motion: _prefMotion == 'scroll' ? const ScrollMotion() : const StretchMotion(),
-                                                  extentRatio: 0.24,
-                                                  children: [
-                                                    SlidableAction(
-                                                      onPressed: (slidableContext) async {
-                                                        bool proceed = true;
-                                                        if (_prefDeleteConfirmEnabled) {
-                                                          final confirm = await CustomDeleteDialog.show(
-                                                            context,
-                                                            title: 'Delete Entry',
-                                                            message: 'Are you sure you want to delete this entry? This action cannot be undone.',
-                                                          );
-                                                          proceed = confirm == true;
-                                                        }
+                                                        final proceed = !_prefDeleteConfirmEnabled
+                                                            ? true
+                                                            : (await CustomDeleteDialog.show(
+                                                                  rootContext,
+                                                                  title: 'Delete Entry',
+                                                                  message: 'Are you sure you want to delete this entry? This action cannot be undone.',
+                                                                )) == true;
                                                         if (proceed) {
-                                                          setState(() {
-                                                            jc.selectedEntries.clear();
-                                                            jc.selectedEntries.add(entry);
-                                                          });
-                                                          await jc.deleteSelectedEntries();
+                                                          jc.removeEntryImmediate(entry);
                                                         } else {
                                                           Slidable.of(slidableContext)?.close();
                                                         }
@@ -323,12 +299,53 @@ class _JournalScreenState extends State<JournalScreen>
                                                   ],
                                                 )
                                               : null,
-                                          child: JournalEntryWidget(
-                                            key: ValueKey(entry.localId ?? entry.firestoreId),
-                                           entry: entry,
-                                            onTap: () async {
+                                          // Swipe right (end) to Edit (long-swipe trigger handled by listener)
+                                          endActionPane: ActionPane(
+                                            motion: _prefMotion == 'scroll' ? const ScrollMotion() : const StretchMotion(),
+                                            extentRatio: 0.24,
+                                            children: [
+                                              SlidableAction(
+                                                onPressed: (slidableContext) async {
+                                                  final result = await Navigator.push<bool>(
+                                                    rootContext,
+                                                    MaterialPageRoute(
+                                                      builder: (context) => EditEntryScreen(
+                                                        entry: entry,
+                                                        journalController: jc,
+                                                      ),
+                                                    ),
+                                                  );
+                                                  if (result == true) {
+                                                    setState(() {});
+                                                  }
+                                                  Slidable.of(slidableContext)?.close();
+                                                },
+                                                backgroundColor: Colors.blueAccent,
+                                                foregroundColor: Colors.white,
+                                                icon: Icons.edit,
+                                                label: 'Edit',
+                                              ),
+                                            ],
+                                          ),
+                                          child: SlidableOpenTrigger(
+                                            onStartFullyOpen: _prefSwipeDeleteEnabled
+                                                ? () async {
+                                                    final proceed = !_prefDeleteConfirmEnabled
+                                                        ? true
+                                                        : (await CustomDeleteDialog.show(
+                                                              rootContext,
+                                                              title: 'Delete Entry',
+                                                              message: 'Are you sure you want to delete this entry? This action cannot be undone.',
+                                                            )) == true;
+                                                    if (proceed) {
+                                                      jc.removeEntryImmediate(entry);
+                                                    }
+                                                  }
+                                                : null,
+                                            onEndFullyOpen: () async {
+                                              // Long-swipe right -> edit
                                               final result = await Navigator.push<bool>(
-                                                context,
+                                                rootContext,
                                                 MaterialPageRoute(
                                                   builder: (context) => EditEntryScreen(
                                                     entry: entry,
@@ -340,58 +357,69 @@ class _JournalScreenState extends State<JournalScreen>
                                                 setState(() {});
                                               }
                                             },
-                                            onToggleFavorite: jc.toggleFavorite,
-                                            isSelectionMode: () => jc.isSelectionMode,
-                                            onToggleSelection: () {
-                                              setState(() => jc.toggleEntrySelection(entry));
-                                            },
-                                            searchTerm: _searchController.text,
-                                            onInsight: () async {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => EntryInsightScreen(
-                                                    entry: entry,
-                                                    journalController: jc,
+                                            child: JournalEntryWidget(
+                                              key: ValueKey(entry.localId ?? entry.firestoreId),
+                                              entry: entry,
+                                              onTap: () async {
+                                                Navigator.push(
+                                                  rootContext,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => EntryInsightScreen(
+                                                      entry: entry,
+                                                      journalController: jc,
+                                                    ),
                                                   ),
-                                                ),
-                                              );
-                                            },
-                                            onEdit: () async {
-                                              final result = await Navigator.push<bool>(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => EditEntryScreen(
-                                                    entry: entry,
-                                                    journalController: jc,
+                                                );
+                                              },
+                                              onToggleFavorite: jc.toggleFavorite,
+                                              isSelectionMode: () => jc.isSelectionMode,
+                                              onToggleSelection: () {
+                                                setState(() => jc.toggleEntrySelection(entry));
+                                              },
+                                              searchTerm: _searchController.text,
+                                              onInsight: () async {
+                                                Navigator.push(
+                                                  rootContext,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => EntryInsightScreen(
+                                                      entry: entry,
+                                                      journalController: jc,
+                                                    ),
                                                   ),
-                                                ),
-                                              );
-                                              if (result == true) {
-                                                setState(() {});
-                                              }
-                                            },
-                                            onDelete: () async {
-                                              bool proceed = true;
-                                              if (_prefDeleteConfirmEnabled) {
-                                                final confirm = await CustomDeleteDialog.show(
-                                                  context,
+                                                );
+                                              },
+                                              onEdit: () async {
+                                                final result = await Navigator.push<bool>(
+                                                  rootContext,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => EditEntryScreen(
+                                                      entry: entry,
+                                                      journalController: jc,
+                                                    ),
+                                                  ),
+                                                );
+                                                if (result == true) {
+                                                  setState(() {});
+                                                }
+                                              },
+                                              onDelete: () async {
+                                                bool proceed = true;
+                                                if (_prefDeleteConfirmEnabled) {
+                                                  final confirm = await CustomDeleteDialog.show(
+                                                  rootContext,
                                                   title: 'Delete Entry',
                                                   message: 'Are you sure you want to delete this entry? This action cannot be undone.',
                                                 );
                                                 proceed = confirm == true;
                                               }
                                               if (proceed) {
-                                                setState(() {
-                                                  jc.selectedEntries.clear();
-                                                  jc.selectedEntries.add(entry);
-                                                });
-                                                await jc.deleteSelectedEntries();
+                                                jc.removeEntryImmediate(entry);
                                               }
-                                            },
-                                            onLongPress: () {
-                                              setState(() => jc.toggleEntrySelection(entry));
-                                            },
+                                              },
+                                              onLongPress: () {
+                                                setState(() => jc.toggleEntrySelection(entry));
+                                              },
+                                            ),
                                           ),
                                         ),
                                       );
