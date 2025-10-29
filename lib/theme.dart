@@ -6,6 +6,10 @@ final lightTheme = ThemeData(
   brightness: Brightness.light,
   scaffoldBackgroundColor: Colors.white,
   fontFamily: 'IBM Plex Sans',
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: Colors.deepPurple,
+    brightness: Brightness.light,
+  ),
   textTheme: TextTheme(
     // Removed const
     displayLarge: TextStyle(
@@ -23,7 +27,7 @@ final lightTheme = ThemeData(
       color: Colors.black,
     ),
     bodyMedium: TextStyle(
-      fontFamily: 'Georgia', // Reverted to Georgia
+      fontFamily: 'IBM Plex Sans',
       fontSize: SizeConstants.textXLarge,
       height: 1.55,
       color: Colors.black,
@@ -44,9 +48,16 @@ final lightTheme = ThemeData(
     ), // Reduced opacity for less apparent unselected icons
     size: SizeConstants.iconMedium,
   ),
-  highlightColor: Colors.deepPurple.withOpacity(
-    0.15,
-  ), // Defined highlight color
+  highlightColor: Colors.deepPurple.withOpacity(0.15),
+  inputDecorationTheme: InputDecorationTheme(
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(SizeConstants.borderRadiusSmall),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(SizeConstants.borderRadiusSmall),
+      borderSide: const BorderSide(width: 1.5),
+    ),
+  ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
       backgroundColor: Colors.deepPurple,
@@ -70,6 +81,10 @@ final darkTheme = ThemeData(
   brightness: Brightness.dark,
   scaffoldBackgroundColor: Colors.black,
   fontFamily: 'IBM Plex Sans',
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: Colors.deepPurple,
+    brightness: Brightness.dark,
+  ),
   textTheme: TextTheme(
     // Removed const
     displayLarge: TextStyle(
@@ -87,7 +102,7 @@ final darkTheme = ThemeData(
       color: Colors.white,
     ),
     bodyMedium: TextStyle(
-      fontFamily: 'Georgia', // Reverted to Georgia
+      fontFamily: 'IBM Plex Sans',
       fontSize: SizeConstants.textXLarge,
       height: 1.55,
       color: Colors.white,
@@ -108,9 +123,16 @@ final darkTheme = ThemeData(
     ), // Reduced opacity for less apparent unselected icons
     size: SizeConstants.iconMedium,
   ),
-  highlightColor: Colors.deepPurpleAccent.withOpacity(
-    0.2,
-  ), // Defined highlight color
+  highlightColor: Colors.deepPurpleAccent.withOpacity(0.2),
+  inputDecorationTheme: InputDecorationTheme(
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(SizeConstants.borderRadiusSmall),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(SizeConstants.borderRadiusSmall),
+      borderSide: const BorderSide(width: 1.5),
+    ),
+  ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
       backgroundColor: Colors.deepPurple,
@@ -123,8 +145,7 @@ final darkTheme = ThemeData(
   ),
   textButtonTheme: TextButtonThemeData(
     style: TextButton.styleFrom(
-      foregroundColor:
-          Colors.purpleAccent[100], // Lighter purple for better contrast
+      foregroundColor: Colors.purpleAccent[100],
       textStyle: const TextStyle(fontWeight: FontWeight.w600),
     ),
   ),

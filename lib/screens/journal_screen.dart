@@ -238,7 +238,7 @@ class _JournalScreenState extends State<JournalScreen>
                                                 ? Colors.white.withOpacity(0.8)
                                                 : Colors.white.withOpacity(0.9),
                                             fontWeight: FontWeight.w500,
-                                            fontFamily: 'IBMPlexSans', // Sans font
+                                            fontFamily: 'IBM Plex Sans', // Sans font
                                           ),
                                         ),
                                       ),
@@ -325,7 +325,21 @@ class _JournalScreenState extends State<JournalScreen>
                                               : null,
                                           child: JournalEntryWidget(
                                             key: ValueKey(entry.localId ?? entry.firestoreId),
-                                            entry: entry,
+                                           entry: entry,
+                                            onTap: () async {
+                                              final result = await Navigator.push<bool>(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => EditEntryScreen(
+                                                    entry: entry,
+                                                    journalController: jc,
+                                                  ),
+                                                ),
+                                              );
+                                              if (result == true) {
+                                                setState(() {});
+                                              }
+                                            },
                                             onToggleFavorite: jc.toggleFavorite,
                                             isSelectionMode: () => jc.isSelectionMode,
                                             onToggleSelection: () {

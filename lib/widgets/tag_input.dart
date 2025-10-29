@@ -145,9 +145,9 @@ class _TagInputWidgetState extends State<TagInputWidget> {
     }
   }
   void _addTag(String tag) {
-    print('Debug: _addTag called with: "$tag"');
+    debugPrint(' _addTag called with: "$tag"');
     if (tag.isEmpty) {
-      print('Debug: Tag is empty, returning');
+      debugPrint(' Tag is empty, returning');
       return;
     }
     
@@ -159,9 +159,9 @@ class _TagInputWidgetState extends State<TagInputWidget> {
     
     // Remove any extra # symbols
     cleanTag = cleanTag.replaceAll(RegExp(r'#+'), '#');
-    print('Debug: Clean tag: "$cleanTag"');
+    debugPrint(' Clean tag: "$cleanTag"');
       if (!_currentTags.contains(cleanTag) && cleanTag.length > 1) {
-      print('Debug: Adding tag to list: $_currentTags');      setState(() {
+      debugPrint(' Adding tag to list: $_currentTags');      setState(() {
         _currentTags.add(cleanTag);
         _tagController.clear();
         _showSuggestions = false;
@@ -169,10 +169,10 @@ class _TagInputWidgetState extends State<TagInputWidget> {
         _showInputField = false; // Hide input field after adding tag
         _inputFieldWidth = 60.0; // Reset to default width
       });
-      print('Debug: Updated tags: $_currentTags');
+      debugPrint(' Updated tags: $_currentTags');
       widget.onTagsChanged(_currentTags);
     } else {
-      print('Debug: Tag not added - already exists or too short');
+      debugPrint(' Tag not added - already exists or too short');
     }
   }
 
@@ -182,14 +182,14 @@ class _TagInputWidgetState extends State<TagInputWidget> {
     });
     widget.onTagsChanged(_currentTags);
   }  void _onAddButtonPressed() {
-    print('Debug: Add button pressed');
+    debugPrint(' Add button pressed');
     final input = _tagController.text.trim();
-    print('Debug: Input text: "$input"');
+    debugPrint(' Input text: "$input"');
     
     if (input.isNotEmpty) {
-      print('Debug: Adding tag: $input');
+      debugPrint(' Adding tag: $input');
       _addTag(input);    } else {
-      print('Debug: Input empty, showing input field and requesting focus');
+      debugPrint(' Input empty, showing input field and requesting focus');
       setState(() {
         _showInputField = true;
         _inputFieldWidth = 60.0; // Initialize with smaller default width
@@ -204,7 +204,7 @@ class _TagInputWidgetState extends State<TagInputWidget> {
   }  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    print('Debug: TagInputWidget build called. Current tags: $_currentTags');
+    debugPrint(' TagInputWidget build called. Current tags: $_currentTags');
     
     // Sync with controller's manual tags (e.g., after entry is saved and tags are cleared)
     if (widget.journalController.manualTags.isEmpty && _currentTags.isNotEmpty) {
@@ -215,7 +215,7 @@ class _TagInputWidgetState extends State<TagInputWidget> {
       _suggestedTags.clear();
       _tagController.clear();
       _inputFieldWidth = 60.0;
-      print('Debug: Cleared tags in sync with controller');
+      debugPrint(' Cleared tags in sync with controller');
     }      return Padding(
         padding: const EdgeInsets.only(bottom: 8.0),
         child: Column(
@@ -283,7 +283,7 @@ class _TagInputWidgetState extends State<TagInputWidget> {
       ),
     );
   }  Widget _buildAddTagButton(ThemeData theme) {
-    print('Debug: _buildAddTagButton called. showInputField: $_showInputField, hasFocus: ${_tagFocusNode.hasFocus}');
+    debugPrint(' _buildAddTagButton called. showInputField: $_showInputField, hasFocus: ${_tagFocusNode.hasFocus}');
     return SizedBox(
       height: 28,
       child: _showInputField 
@@ -318,7 +318,7 @@ class _TagInputWidgetState extends State<TagInputWidget> {
                     isDense: true,
                   ),
                   onSubmitted: (value) {
-                    print('Debug: TextField onSubmitted: $value');
+                    debugPrint(' TextField onSubmitted: $value');
                     _addTag(value);
                   },
                 ),
@@ -326,7 +326,7 @@ class _TagInputWidgetState extends State<TagInputWidget> {
               const SizedBox(width: 6),
               InkWell(
                 onTap: () {
-                  print('Debug: Check button tapped');
+                  debugPrint(' Check button tapped');
                   _onAddButtonPressed();
                 },
                 borderRadius: BorderRadius.circular(14),
@@ -347,15 +347,15 @@ class _TagInputWidgetState extends State<TagInputWidget> {
             ],
           )        : InkWell(
             onTap: () {
-              print('Debug: Add tag button tapped (InkWell)');
-              print('Debug: About to show input field and request focus');
+              debugPrint(' Add tag button tapped (InkWell)');
+              debugPrint(' About to show input field and request focus');
               setState(() {
                 _showInputField = true;
               });
               // Request focus after the widget is rebuilt
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 _tagFocusNode.requestFocus();
-                print('Debug: Focus requested in post frame callback');
+                debugPrint(' Focus requested in post frame callback');
               });
             },
             borderRadius: BorderRadius.circular(14),

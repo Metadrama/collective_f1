@@ -390,7 +390,7 @@ class _EntryInsightScreenState extends State<EntryInsightScreen> with TickerProv
                                     data: _briefInsight,
                                     styleSheet: MarkdownStyleSheet(
                                       p: theme.textTheme.bodySmall?.copyWith(
-                                        fontFamily: 'IBMPlexSans',
+                                        fontFamily: 'IBM Plex Sans',
                                         fontSize: 16,
                                       ),
                                     ),
@@ -659,7 +659,7 @@ class _BlinkingCursorState extends State<_BlinkingCursor> with SingleTickerProvi
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: _controller,
-      child: Text('|', style: TextStyle(fontSize: 16, fontFamily: 'IBMPlexSans', color: Theme.of(context).colorScheme.primary)),
+      child: Text('|', style: TextStyle(fontSize: 16, fontFamily: 'IBM Plex Sans', color: Theme.of(context).colorScheme.primary)),
     );
   }
 }

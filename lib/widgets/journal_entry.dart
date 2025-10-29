@@ -421,14 +421,20 @@ class _JournalEntryWidgetState extends State<JournalEntryWidget> {
         position: Tween<Offset>(
           begin: const Offset(0, 0.05),
           end: Offset.zero,
-        ).animate(widget.entry.animController),        child: GestureDetector(
+        ).animate(widget.entry.animController),
+        child: GestureDetector(
           onTap: () {
             // If in selection mode, toggle selection on tap
             if (widget.isSelectionMode?.call() == true) {
               widget.onToggleSelection?.call();
             } else {
-              // Show context menu on regular tap when not in selection mode
-              _showContextMenu(context);
+              // Primary: open detail/edit surface when tapped
+              if (widget.onTap != null) {
+                widget.onTap!.call();
+              } else {
+                // Fallback: context menu if no tap handler provided
+                _showContextMenu(context);
+              }
             }
           },
           onLongPress: widget.onLongPress,

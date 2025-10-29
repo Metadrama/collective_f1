@@ -194,10 +194,8 @@ class JournalToolbar extends StatelessWidget {
                     Icons.calendar_today,
                     size: SizeConstants.iconMedium,
                   ),
+                  tooltip: 'Pick date',
                   onPressed: onOpenDatePicker,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  visualDensity: VisualDensity.compact,
                 ),
               if (!isSearching)
                 IconButton(
@@ -205,10 +203,8 @@ class JournalToolbar extends StatelessWidget {
                     Icons.analytics_outlined,
                     size: SizeConstants.iconMedium,
                   ),
+                  tooltip: 'Open analytics',
                   onPressed: onOpenAnalytics,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  visualDensity: VisualDensity.compact,
                 ),
               if (isSearching)
                 IconButton(
@@ -216,10 +212,8 @@ class JournalToolbar extends StatelessWidget {
                     Icons.close,
                     size: SizeConstants.iconMedium,
                   ),
+                  tooltip: 'Close search',
                   onPressed: onToggleSearch,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  visualDensity: VisualDensity.compact,
                 ),
               if (!isSearching)
                 PopupMenuButton(

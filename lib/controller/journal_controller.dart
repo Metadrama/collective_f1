@@ -265,7 +265,14 @@ class JournalController {
               localId: doc.id,
               localImagePath: null,
             );
-          }).toList();      entries.clear();
+          }).toList();
+      // Dispose existing entries' animation controllers before replacing
+      for (final e in entries) {
+        try {
+          e.dispose();
+        } catch (_) {}
+      }
+      entries.clear();
       entries.addAll(loadedEntries);
       // Sort entries newest first
       entries.sort((a, b) => b.rawDateTime.compareTo(a.rawDateTime));
@@ -612,6 +619,10 @@ class JournalController {
           debugPrint("Error deleting image ${entry.imageUrl} from Storage: $e");
         }
       }
+      // Dispose animation controller for the soon-to-be removed entry
+      try {
+        entry.dispose();
+      } catch (_) {}
     }
     if (localIdsToDelete.isNotEmpty) {
       await _store!.records(localIdsToDelete).delete(_db!);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:flutter/foundation.dart';
 
 import 'firebase_options.dart';
 import 'screens/journal_screen.dart';
@@ -16,9 +17,7 @@ Future<void> main() async {
   
   // Initialize Firebase App Check
   await FirebaseAppCheck.instance.activate(
-    // Use debug provider for development
-    androidProvider: AndroidProvider.debug,
-    // For production, use: AndroidProvider.playIntegrity,
+    androidProvider: kReleaseMode ? AndroidProvider.playIntegrity : AndroidProvider.debug,
   );
   
   runApp(const JournalApp());
@@ -40,7 +39,13 @@ class JournalApp extends StatelessWidget {
         builder: (ctx, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
-              body: SizedBox.shrink(), // Replaced CircularProgressIndicator
+              body: Center(
+                child: SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(strokeWidth: 2.4),
+                ),
+              ),
             );
           }
           return snapshot.hasData ? const JournalScreen() : const AuthScreen();
